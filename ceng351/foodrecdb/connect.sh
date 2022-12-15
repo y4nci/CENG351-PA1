@@ -1,0 +1,1 @@
+mysql -h momcorp.ceng.metu.edu.tr -u e2449015 -D db2449015 -P8080 -pzDA827mOvqKG-EFH
