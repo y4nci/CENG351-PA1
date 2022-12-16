@@ -27,10 +27,10 @@ public class FOODRECDB implements IFOODRECDB {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection =  DriverManager.getConnection(url, user, password);
-        } 
+        }
         catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
-        } 
+        }
     }
 
     @Override
@@ -51,7 +51,7 @@ public class FOODRECDB implements IFOODRECDB {
                 "cuisine VARCHAR(20) ," +
                 "price INT ," +
                 "PRIMARY KEY (itemID))";
-        
+
         String queryCreateIngredients = "CREATE TABLE IF NOT EXISTS Ingredients (" +
                 "ingredientID INT ," +
                 "ingredientName VARCHAR(40) ," +
@@ -60,23 +60,23 @@ public class FOODRECDB implements IFOODRECDB {
         String queryCreateIncludes = "CREATE TABLE IF NOT EXISTS Includes (" +
                 "itemID INT ," +
                 "ingredientID INT ," +
-                "PRIMARY KEY (itemID, ingredientID))" +
+                "PRIMARY KEY (itemID, ingredientID)," +
                 "FOREIGN KEY (itemID) REFERENCES MenuItems(itemID) ON DELETE CASCADE ON UPDATE CASCADE," +
-                "FOREIGN KEY (ingredientID) REFERENCES Ingredients(ingredientID)) ON DELETE CASCADE ON UPDATE CASCADE";
+                "FOREIGN KEY (ingredientID) REFERENCES Ingredients(ingredientID) ON DELETE CASCADE ON UPDATE CASCADE)";
 
         String queryCreateRatings = "CREATE TABLE IF NOT EXISTS Ratings (" +
                 "ratingID INT ," +
                 "itemID INT ," +
                 "rating INT ," +
                 "ratingDate DATE ," +
-                "PRIMARY KEY (ratingID))" +
-                "FOREIGN KEY (itemID) REFERENCES MenuItems(itemID) ON DELETE CASCADE ON UPDATE CASCADE";
+                "PRIMARY KEY (ratingID), " +
+                "FOREIGN KEY (itemID) REFERENCES MenuItems(itemID) ON DELETE CASCADE ON UPDATE CASCADE)";
 
         String queryCreateDietaryCategories = "CREATE TABLE IF NOT EXISTS DietaryCategories (" +
                 "ingredientID INT ," +
                 "dietaryCategory VARCHAR(20) ," +
-                "PRIMARY KEY (ingredientID, dietaryCategory))" +
-                "FOREIGN KEY (ingredientID) REFERENCES Ingredients(ingredientID) ON DELETE CASCADE ON UPDATE CASCADE";
+                "PRIMARY KEY (ingredientID, dietaryCategory), " +
+                "FOREIGN KEY (ingredientID) REFERENCES Ingredients(ingredientID) ON DELETE CASCADE ON UPDATE CASCADE)";
 
         try {
             Statement statement = connection.createStatement();
@@ -86,7 +86,7 @@ public class FOODRECDB implements IFOODRECDB {
             statement.executeUpdate(queryCreateRatings);            inserted++;
             statement.executeUpdate(queryCreateDietaryCategories);  inserted++;
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -106,13 +106,13 @@ public class FOODRECDB implements IFOODRECDB {
 
         try {
             Statement statement = this.connection.createStatement();
-            statement.executeUpdate(queryDropMenuItems);          dropped++;
-            statement.executeUpdate(queryDropIngredients);        dropped++;
-            statement.executeUpdate(queryDropIncludes);           dropped++;
-            statement.executeUpdate(queryDropRatings);            dropped++;
             statement.executeUpdate(queryDropDietaryCategories);  dropped++;
+            statement.executeUpdate(queryDropRatings);            dropped++;
+            statement.executeUpdate(queryDropIncludes);           dropped++;
+            statement.executeUpdate(queryDropIngredients);        dropped++;
+            statement.executeUpdate(queryDropMenuItems);          dropped++;
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -136,7 +136,7 @@ public class FOODRECDB implements IFOODRECDB {
                 statement.executeUpdate(queryInsertMenuItem);
                 statement.close();
                 inserted++;
-            } 
+            }
             catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -159,7 +159,7 @@ public class FOODRECDB implements IFOODRECDB {
                 statement.executeUpdate(queryInsertIngredient);
                 statement.close();
                 inserted++;
-            } 
+            }
             catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -182,7 +182,7 @@ public class FOODRECDB implements IFOODRECDB {
                 statement.executeUpdate(queryInsertIncludes);
                 statement.close();
                 inserted++;
-            } 
+            }
             catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -207,7 +207,7 @@ public class FOODRECDB implements IFOODRECDB {
                 statement.executeUpdate(queryInsertRating);
                 statement.close();
                 inserted++;
-            } 
+            }
             catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -230,7 +230,7 @@ public class FOODRECDB implements IFOODRECDB {
                 statement.executeUpdate(queryInsertDietaryCategory);
                 statement.close();
                 inserted++;
-            } 
+            }
             catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -243,7 +243,7 @@ public class FOODRECDB implements IFOODRECDB {
     public MenuItem[] getMenuItemsWithGivenIngredient(String name) {
         String queryGetMenuItemsWithGivenIngredient = "SELECT * FROM MenuItems WHERE itemID IN (" +
                 "SELECT itemID FROM Includes WHERE ingredientID IN (" +
-                "SELECT ingredientID FROM Ingredients WHERE ingredientName = '" + name + "'))";
+                "SELECT ingredientID FROM Ingredients WHERE ingredientName = '" + name + "') )";
 
         ArrayList<MenuItem> menuItems = new ArrayList<>();
 
@@ -261,7 +261,7 @@ public class FOODRECDB implements IFOODRECDB {
             }
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -272,7 +272,7 @@ public class FOODRECDB implements IFOODRECDB {
     @Override
     public MenuItem[] getMenuItemsWithoutAnyIngredient() {
         String queryGetMenuItemsWithoutAnyIngredient = "SELECT * FROM MenuItems WHERE itemID NOT IN (" +
-                "SELECT itemID FROM Includes)";
+                "SELECT itemID FROM Includes) ";
 
         ArrayList<MenuItem> menuItems = new ArrayList<>();
 
@@ -290,7 +290,7 @@ public class FOODRECDB implements IFOODRECDB {
             }
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -301,7 +301,7 @@ public class FOODRECDB implements IFOODRECDB {
     @Override
     public Ingredient[] getNotIncludedIngredients(){
         String queryGetNotIncludedIngredients = "SELECT * FROM Ingredients WHERE ingredientID NOT IN (" +
-                "SELECT ingredientID FROM Includes)";
+                "SELECT ingredientID FROM Includes) ";
 
         ArrayList<Ingredient> ingredients = new ArrayList<>();
 
@@ -317,7 +317,7 @@ public class FOODRECDB implements IFOODRECDB {
             }
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -330,7 +330,7 @@ public class FOODRECDB implements IFOODRECDB {
         String queryGetMenuItemWithMostIngredients = "SELECT * FROM MenuItems WHERE itemID IN (" +
                 "SELECT itemID FROM Includes GROUP BY itemID HAVING COUNT(itemID) = (" +
                 "SELECT MAX(count) FROM (" +
-                "SELECT itemID, COUNT(itemID) AS count FROM Includes GROUP BY itemID)))";
+                "SELECT itemID, COUNT(itemID) AS count FROM Includes GROUP BY itemID) as SUB1 ) )";
 
         MenuItem menuItem = null;
 
@@ -348,7 +348,7 @@ public class FOODRECDB implements IFOODRECDB {
             }
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -377,7 +377,7 @@ public class FOODRECDB implements IFOODRECDB {
             }
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -389,7 +389,7 @@ public class FOODRECDB implements IFOODRECDB {
     public MenuItem[] getMenuItemsForDietaryCategory(String category){
         String queryGetMenuItemsForDietaryCategory = "SELECT * FROM MenuItems WHERE itemID IN (" +
                 "SELECT itemID FROM Includes WHERE ingredientID IN (" +
-                "SELECT ingredientID FROM DietaryCategories WHERE dietaryCategory = '" + category + "'))";
+                "SELECT ingredientID FROM DietaryCategories WHERE dietaryCategory = '" + category + "') )";
 
         ArrayList<MenuItem> menuItems = new ArrayList<>();
 
@@ -407,7 +407,7 @@ public class FOODRECDB implements IFOODRECDB {
             }
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -420,7 +420,7 @@ public class FOODRECDB implements IFOODRECDB {
         String queryGetMostUsedIngredient = "SELECT * FROM Ingredients WHERE ingredientID IN (" +
                 "SELECT ingredientID FROM Includes GROUP BY ingredientID HAVING COUNT(ingredientID) = (" +
                 "SELECT MAX(count) FROM (" +
-                "SELECT ingredientID, COUNT(ingredientID) AS count FROM Includes GROUP BY ingredientID)))";
+                "SELECT ingredientID, COUNT(ingredientID) AS count FROM Includes GROUP BY ingredientID) as SUB1 ) )";
 
         Ingredient ingredient = null;
 
@@ -435,7 +435,7 @@ public class FOODRECDB implements IFOODRECDB {
             ingredient = new Ingredient(ingredientID, ingredientName);
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -461,7 +461,7 @@ public class FOODRECDB implements IFOODRECDB {
             }
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -472,7 +472,7 @@ public class FOODRECDB implements IFOODRECDB {
     @Override
     public QueryResult.CuisineWithAverageResult[] getCuisinesWithAvgIngredientCount(){
         String queryGetCuisinesWithAvgIngredientCount = "SELECT cuisine, AVG(count) AS avgCount FROM (" +
-                "SELECT cuisine, COUNT(ingredientID) AS count FROM MenuItems NATURAL JOIN Includes GROUP BY itemID) GROUP BY cuisine";
+                "SELECT cuisine, COUNT(ingredientID) AS count FROM MenuItems NATURAL JOIN Includes GROUP BY itemID) as SUB  GROUP BY cuisine";
 
         ArrayList<QueryResult.CuisineWithAverageResult> cuisineWithAverageResults = new ArrayList<>();
 
@@ -488,7 +488,7 @@ public class FOODRECDB implements IFOODRECDB {
             }
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -500,7 +500,7 @@ public class FOODRECDB implements IFOODRECDB {
     public int increasePrice(String ingredientName, String increaseAmount){
         String queryIncreasePrice = "UPDATE MenuItems SET price = price + " + increaseAmount + " WHERE itemID IN (" +
                 "SELECT itemID FROM Includes WHERE ingredientID IN (" +
-                "SELECT ingredientID FROM Ingredients WHERE ingredientName = '" + ingredientName + "'))";
+                "SELECT ingredientID FROM Ingredients WHERE ingredientName = '" + ingredientName + "') )";
 
         int rowsAffected = 0;
 
@@ -509,7 +509,7 @@ public class FOODRECDB implements IFOODRECDB {
             rowsAffected = statement.executeUpdate(queryIncreasePrice);
 
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
@@ -519,25 +519,28 @@ public class FOODRECDB implements IFOODRECDB {
 
     @Override
     public Rating[] deleteOlderRatings(String date){
-        String queryDeleteOlderRatings = "DELETE FROM Ratings WHERE date < '" + date + "'";
+        String querySelectOlderRatings = "SELECT * FROM Ratings WHERE ratingDate < '" + date + "'";
+        String queryDeleteOlderRatings = "DELETE FROM Ratings WHERE ratingDate < '" + date + "'";
 
         ArrayList<Rating> ratings = new ArrayList<>();
 
         try {
             Statement statement = this.connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(queryDeleteOlderRatings);
+            ResultSet resultSet = statement.executeQuery(querySelectOlderRatings);
 
             while (resultSet.next()) {
                 int ratingID = resultSet.getInt("ratingID");
                 int itemID = resultSet.getInt("itemID");
                 int rating = resultSet.getInt("rating");
-                String resultDate = resultSet.getString("date");
+                String resultDate = resultSet.getString("ratingDate");
 
                 ratings.add(new Rating(ratingID, itemID, rating, resultDate));
             }
 
+            statement.executeUpdate(queryDeleteOlderRatings);
+
             statement.close();
-        } 
+        }
         catch (SQLException e) {
             e.printStackTrace();
         }
