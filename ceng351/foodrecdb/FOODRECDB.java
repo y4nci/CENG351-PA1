@@ -358,7 +358,10 @@ public class FOODRECDB implements IFOODRECDB {
 
     @Override
     public QueryResult.MenuItemAverageRatingResult[] getMenuItemsWithAvgRatings(){
-        String queryGetMenuItemsWithAvgRatings = "SELECT itemID, itemName, cuisine, price, AVG(rating) AS avgRating FROM MenuItems NATURAL JOIN Ratings GROUP BY itemID";
+        /* String queryGetMenuItemsWithAvgRatings = "SELECT itemID, itemName, cuisine, price, AVG(rating) AS avgRating FROM MenuItems NATURAL JOIN Ratings GROUP BY itemID"; */
+
+        String queryGetMenuItemsWithAvgRatings = "SELECT MenuItems.itemID, itemName, cuisine, price, AVG(rating) AS avgRating " +
+                "FROM MenuItems LEFT JOIN Ratings ON MenuItems.itemID = Ratings.itemID GROUP BY MenuItems.itemID ORDER BY avgRating DESC";
 
         ArrayList<QueryResult.MenuItemAverageRatingResult> menuItemAverageRatingResults = new ArrayList<>();
 
@@ -387,9 +390,34 @@ public class FOODRECDB implements IFOODRECDB {
 
     @Override
     public MenuItem[] getMenuItemsForDietaryCategory(String category){
-        String queryGetMenuItemsForDietaryCategory = "SELECT * FROM MenuItems WHERE itemID IN (" +
-                "SELECT itemID FROM Includes WHERE ingredientID IN (" +
-                "SELECT ingredientID FROM DietaryCategories WHERE dietaryCategory = '" + category + "') )";
+        /*
+            String queryGetMenuItemsForDietaryCategory = "SELECT * FROM MenuItems WHERE MenuItems.itemID IN (" +
+                    "SELECT Includes.itemID FROM Includes WHERE Includes.ingredientID IN (" +
+                    "SELECT DietaryCategories.ingredientID FROM DietaryCategories WHERE dietaryCategory = '" + category + "') )";
+        */
+
+        // ALL OF THE INGREDIENTS THAT ARE USED INT THE MENU ITEMS
+        // SHOULD BE IN THE GIVEN DIETARY CATEGORY
+        // WE NEED TO PERFORM RELATIONAL ALGEBRA DIVISION TO GET THE MENU ITEMS
+        // WE NEED TO DO THIS WITHOUT USING EXCEPT.
+        // SOMETHING LIKE THIS WILL WORK
+        // SELECT DISTINCT fb1.name, fb1.surname FROM favoriteBeer fb1
+        //JOIN stock s ON fb1.beerName = s.beerName
+        //GROUP BY fb1.name, fb1.surname, s.restaurant
+        //HAVING COUNT(*) = (
+        //  SELECT COUNT(*) FROM favoriteBeer fb2
+        //  WHERE fb1.name = fb2.name AND fb1.surname = fb2.surname
+        //)
+
+        String queryGetMenuItemsForDietaryCategory = "SELECT DISTINCT MenuItems.itemID, itemName, cuisine, price FROM MenuItems " +
+                "JOIN Includes ON MenuItems.itemID = Includes.itemID " +
+                "JOIN DietaryCategories ON Includes.ingredientID = DietaryCategories.ingredientID " +
+                "WHERE DietaryCategories.dietaryCategory = '" + category + "' " +
+                "GROUP BY MenuItems.itemID, itemName, cuisine, price " +
+                "HAVING COUNT(*) = (" +
+                "SELECT COUNT(*) FROM Includes " +
+                "WHERE MenuItems.itemID = Includes.itemID " +
+                ") ORDER BY MenuItems.itemID";
 
         ArrayList<MenuItem> menuItems = new ArrayList<>();
 
@@ -445,7 +473,14 @@ public class FOODRECDB implements IFOODRECDB {
 
     @Override
     public QueryResult.CuisineWithAverageResult[] getCuisinesWithAvgRating(){
-        String queryGetCuisinesWithAvgRating = "SELECT cuisine, AVG(rating) AS avgRating FROM MenuItems NATURAL JOIN Ratings GROUP BY cuisine";
+        /*
+            String queryGetCuisinesWithAvgRating = "SELECT cuisine, AVG(rating) AS avgRating FROM MenuItems NATURAL JOIN Ratings GROUP BY cuisine";
+        */
+
+        // We need to print out the cuisines sorted by their ratings, including the cuisines whose average rating
+        // is null (i.e. no ratings for that cuisine). So we need to use a LEFT JOIN instead of a NATURAL JOIN.
+        String queryGetCuisinesWithAvgRating = "SELECT cuisine, AVG(rating) AS avgRating FROM MenuItems LEFT JOIN Ratings ON MenuItems.itemID = Ratings.itemID GROUP BY cuisine ORDER BY avgRating DESC";
+
 
         ArrayList<QueryResult.CuisineWithAverageResult> cuisineWithAverageResults = new ArrayList<>();
 
@@ -471,8 +506,16 @@ public class FOODRECDB implements IFOODRECDB {
 
     @Override
     public QueryResult.CuisineWithAverageResult[] getCuisinesWithAvgIngredientCount(){
+        /*
+            String queryGetCuisinesWithAvgIngredientCount = "SELECT cuisine, AVG(count) AS avgCount FROM (" +
+                    "SELECT cuisine, COUNT(ingredientID) AS count FROM MenuItems NATURAL JOIN Includes GROUP BY itemID) as SUB  GROUP BY cuisine";
+        */
+
+        // We need to print out the cuisines sorted by their average ingredient count, including the cuisines whose average ingredient count
+        // equals to 0. So we need to use a LEFT JOIN instead of a NATURAL JOIN.
+
         String queryGetCuisinesWithAvgIngredientCount = "SELECT cuisine, AVG(count) AS avgCount FROM (" +
-                "SELECT cuisine, COUNT(ingredientID) AS count FROM MenuItems NATURAL JOIN Includes GROUP BY itemID) as SUB  GROUP BY cuisine";
+                "SELECT cuisine, COUNT(ingredientID) AS count FROM MenuItems LEFT JOIN Includes ON MenuItems.itemID = Includes.itemID GROUP BY MenuItems.itemID) as SUB  GROUP BY cuisine ORDER BY avgCount DESC";
 
         ArrayList<QueryResult.CuisineWithAverageResult> cuisineWithAverageResults = new ArrayList<>();
 
